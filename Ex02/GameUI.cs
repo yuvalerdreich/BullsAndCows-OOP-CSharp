@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Ex02;
-using Ex02.ConsoleUtils;
 
 namespace Ex02
 {
