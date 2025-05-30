@@ -8,6 +8,7 @@ On each turn, the player submits a guess (4 uppercase letters, no duplicates)
 The system provides feedback:  
 **V** → correct letter and position (bull)  
 **X** → correct letter, wrong position (cow)
+
 The player continues guessing until:
 They guess correctly and win, or
 They run out of guesses and lose.
