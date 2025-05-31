@@ -8,26 +8,20 @@ namespace Ex02
     public class GameLogic
     {
         private readonly Random r_Rand;
-        private string m_ComputerGeneratedCharsStr;
-        private const int k_NumOfCharsInGuess = 4;
+        private List<eGuessOption> m_ComputerGeneratedSecretSequence; 
+        private const int k_LengthOfGuess = 4;
 
         public GameLogic()
         {
             r_Rand = new Random();
-            m_ComputerGeneratedCharsStr = GenerateComputerInput();
+            m_ComputerGeneratedSecretSequence = GenerateComputerInput();
+
         }
 
-        public enum eInputValidity
-        {
-            Valid,
-            SyntaxError,
-            SemanticError
-        }
-
-        public enum eCharGuessState
+        public enum eGuessUnitState
         {
             Bull,
-            Cow,
+            Cow
         }
 
         public enum eGameStatus
@@ -37,86 +31,79 @@ namespace Ex02
             Pending
         }
 
-        public string ComputerGeneratedCharsStr
+        public enum eGuessOption
+        {
+            A, B, C, D, E, F, G, H
+        }
+
+        public List<eGuessOption> ComputerGeneratedSecretSequence
         {
             get
             {
-                return m_ComputerGeneratedCharsStr;
+                return m_ComputerGeneratedSecretSequence;
             }
         }
 
-        public string GenerateComputerInput()
+        public int LengthOfGuess
         {
-            StringBuilder genratedChars = new StringBuilder();
-            char randomChar;
+            get
+            {
+                return k_LengthOfGuess;
+            }
+        }
 
-            for (int i = 0; i < k_NumOfCharsInGuess; i++)
+        public List<eGuessOption> GenerateComputerInput()
+        {
+            List<eGuessOption> genratedSecretSequence = new List<eGuessOption>();
+            eGuessOption randomGuess;
+
+            while (genratedSecretSequence.Count < k_LengthOfGuess)
             {
                 do
                 {
-                    randomChar = (char)('A' + r_Rand.Next(0, 8));
-                } while (genratedChars.ToString().Contains(randomChar)); // TODO: check if there is a simpler way and maybe not use stringbuilder
+                    randomGuess = (eGuessOption)(r_Rand.Next(0, 8));
+                } while (genratedSecretSequence.Contains(randomGuess));
 
-                genratedChars.Append(randomChar);
+                genratedSecretSequence.Add(randomGuess);
             }
 
-            return genratedChars.ToString();
+            return genratedSecretSequence;
         }
 
-        public eInputValidity IsValidNumOfGuesses(string i_UserInput, out int o_NumOfGuesses)
+        public bool IsValidRange(int i_NumOfGuesses)
         {
-            eInputValidity isValid = eInputValidity.Valid;
-            bool checkIfNumber = int.TryParse(i_UserInput, out int number);
+            bool isValid = true;
 
-            o_NumOfGuesses = number;
-            if (!checkIfNumber)
+            if (!(i_NumOfGuesses >= 4 && i_NumOfGuesses <= 10))
             {
-                isValid = eInputValidity.SyntaxError;
-            }
-            else
-            {
-                if (!(number >= 4 && number <= 10))
-                {
-                    isValid = eInputValidity.SemanticError;
-                }
+                isValid = false;
             }
 
             return isValid;
         }
 
-        public eInputValidity IsValidGuess(string i_UserInput)
+        public bool IsSemanticalValidGuess(List<eGuessOption> i_UserInputAsGuessList)
         {
-            eInputValidity isValid = eInputValidity.Valid;
+            bool isSemanticalValid = true;
+            List <eGuessOption> arrOfAllCaseOptions = new List<eGuessOption> { eGuessOption.A, eGuessOption.B, eGuessOption.C, eGuessOption.D, eGuessOption.E, eGuessOption.F, eGuessOption.G, eGuessOption.H };
 
-            if (i_UserInput.Length == 4)
-            {
-                foreach (char c in i_UserInput)
-                {
-                    if (!(c >= 'A' && c <= 'Z'))
-                    {
-                        isValid = eInputValidity.SyntaxError;
-                        break;
-                    }
-                    else if (c > 'H' || countCharAppearences(i_UserInput, c) > 1)
-                    {
-                        isValid = eInputValidity.SemanticError;
-                        break;
-                    }
-                }
-            }
-            else
-            {
-                isValid = eInputValidity.SyntaxError;
-            }
+              foreach (eGuessOption guessUnit in i_UserInputAsGuessList)
+              {
+                  if (!(arrOfAllCaseOptions.Contains(guessUnit)) || countCharAppearences(i_UserInputAsGuessList, guessUnit) > 1)
+                  {
+                      isSemanticalValid = false;
+                      break;
+                  }
+              }
 
-            return isValid;
+            return isSemanticalValid;
         }
 
-        private int countCharAppearences(string i_Str, char i_CharToCheck)
+        private int countCharAppearences(List<eGuessOption> i_Lst, eGuessOption i_CharToCheck)
         {
             int count = 0;
 
-            foreach (char c in i_Str)
+            foreach (eGuessOption c in i_Lst)
             {
                 if (c == i_CharToCheck)
                 {
@@ -127,23 +114,23 @@ namespace Ex02
             return count;
         }
 
-        public List<eCharGuessState> ProcessUserGuess(string i_currUserGuess)
+        public List<eGuessUnitState> ProcessUserGuess(List<eGuessOption> i_CurrUserGuess)
         {
-            char c;
-            List<eCharGuessState> feedback = new List<eCharGuessState>();
+            List<eGuessUnitState> feedback = new List<eGuessUnitState>();
+            int guessUnitIdx;
 
-            for (int i = 0; i < k_NumOfCharsInGuess; i++)
+            foreach (eGuessOption guessUnit in i_CurrUserGuess)
             {
-                c = i_currUserGuess[i];
-                if (m_ComputerGeneratedCharsStr.Contains(c))
+                if (m_ComputerGeneratedSecretSequence.Contains(guessUnit))
                 {
-                    if (m_ComputerGeneratedCharsStr[i] == c)
+                    guessUnitIdx = i_CurrUserGuess.IndexOf(guessUnit);
+                    if (m_ComputerGeneratedSecretSequence[guessUnitIdx] == guessUnit)
                     {
-                        feedback.Add(eCharGuessState.Bull);
+                        feedback.Add(eGuessUnitState.Bull);
                     }
                     else
                     {
-                        feedback.Add(eCharGuessState.Cow);
+                        feedback.Add(eGuessUnitState.Cow);
                     }
                 }
             }
@@ -151,33 +138,28 @@ namespace Ex02
             return feedback;
         }
 
-        public eGameStatus CheckIfWonOrLost(List<eCharGuessState> i_GuessFeedback, int i_currGuessIdx, int i_MaxNumOfGuesses)
+        public eGameStatus CheckIfWonOrLost(List<eGuessUnitState> i_GuessFeedback, int i_currGuessIdx, int i_MaxNumOfGuesses)
         {
             eGameStatus gameStatus = eGameStatus.Pending;
             int countBulls = 0;
 
-            foreach (eCharGuessState charState in i_GuessFeedback)
+            foreach (eGuessUnitState charState in i_GuessFeedback)
             {
-                if (charState == eCharGuessState.Bull)
+                if (charState == eGuessUnitState.Bull)
                 {
                     countBulls++;
                 }
-                else
+                else 
                 {
-                    if (i_currGuessIdx == i_MaxNumOfGuesses) 
-                    {
-                        gameStatus = eGameStatus.Loss;
-                    }
-
                     break;
                 }
             }
 
-            if (countBulls == k_NumOfCharsInGuess)
+            if (countBulls == k_LengthOfGuess)
             {
                 gameStatus = eGameStatus.Win;
             }
-            else if (i_currGuessIdx == i_MaxNumOfGuesses)
+            else if (i_currGuessIdx == i_MaxNumOfGuesses) 
             {
                 gameStatus = eGameStatus.Loss;
             }

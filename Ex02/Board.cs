@@ -1,15 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using Ex02;
 using Ex02.ConsoleUtils;
 
 namespace Ex02
 {
     public class Board
     {
-        private const int k_NunSpacesFirstCol = 9;
-        private const int k_NumSpacesSecondCol = 7;
         private string[,] m_BoardArray;
         private int m_nextEmptyRow;
         private int m_NumOfRows;
@@ -28,7 +25,7 @@ namespace Ex02
             string lineSeparator = "|=========|=======|";
             string emptyLine = "|         |       |";
 
-            Console.Clear();
+            Screen.Clear();
             Console.WriteLine("Current board status");
             Console.WriteLine();
             Console.WriteLine("|Pins:    |Result:|");
@@ -50,20 +47,19 @@ namespace Ex02
         {
             string spacedGuess = string.Join(" ", i_Guess.ToCharArray());
             string spacedResult = string.Join(" ", i_Result.ToCharArray());
-            int lengthSpacedResult = spacedResult.Length; // mabye not neccesery
 
             m_BoardArray[m_nextEmptyRow, 0] = spacedGuess;
-            m_BoardArray[m_nextEmptyRow, 1] = spacedResult.PadRight(k_NumSpacesSecondCol);
+            m_BoardArray[m_nextEmptyRow, 1] = spacedResult.PadRight(7);
             m_nextEmptyRow++;
         }
 
-        public string ProcessResult(List<GameLogic.eCharGuessState> i_ResultList)
+        public string ProcessResult(List<GameLogic.eGuessUnitState> i_ResultList)
         {
             StringBuilder sortedResultList = new StringBuilder();
 
-            foreach (GameLogic.eCharGuessState charState in i_ResultList)
+            foreach (GameLogic.eGuessUnitState charState in i_ResultList)
             {
-                if (charState == GameLogic.eCharGuessState.Bull)
+                if (charState == GameLogic.eGuessUnitState.Bull)
                 {
                     sortedResultList.Insert(0, 'V');
                 }
@@ -78,15 +74,9 @@ namespace Ex02
 
         public void NoMoreGuessesDisplay(string i_ComputerStr)
         {
-            revealComputerInput(i_ComputerStr);
+            string spacedComputerInput = string.Join(" ", i_ComputerStr.ToCharArray());
+            m_BoardArray[0, 0] = spacedComputerInput;
             DisplayBoard();
-        }
-
-        private void revealComputerInput(string i_ComputerStr)
-        {
-            string spacedInput = string.Join(" ", i_ComputerStr.ToCharArray());
-
-            m_BoardArray[0, 0] = spacedInput;
         }
     }
 }

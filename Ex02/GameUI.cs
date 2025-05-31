@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using Ex02;
+using System.Text;
+using static Ex02.GameLogic;
 
 namespace Ex02
 {
@@ -8,113 +9,134 @@ namespace Ex02
     {
         private const string k_Quit = "Q";
         private GameLogic m_GameLogic = new GameLogic();
-        private Board m_gameBoard;
 
-        private int getMaxNumOfGuessesFromUser()
+        public string GetQuit 
         {
-            string userInput;
-            int numOfGuesses;
-            GameLogic.eInputValidity userInputValidity;
-
-            Console.WriteLine("Please enter the max number of guesses you wish for (should be between 4 and 10)");
-            userInput = Console.ReadLine();
-            userInputValidity = m_GameLogic.IsValidNumOfGuesses(userInput, out numOfGuesses);
-            while (userInputValidity != GameLogic.eInputValidity.Valid)
+            get
             {
-                if (userInputValidity == GameLogic.eInputValidity.SyntaxError)
+                return k_Quit;
+            }
+        }
+
+
+        public int GetMaxNumOfGuessesFromUser()
+        {
+            string userInput = null;
+            int numOfGuesses = 0;
+            bool userInputValidity = false;
+
+            while (!(userInputValidity))
+            {
+                Console.WriteLine("Please enter the max number of guesses you wish for (should be between 4 and 10)");
+                userInput = Console.ReadLine();
+                if (userInputValidity == isSyntactlyValidNum(userInput, out numOfGuesses))
                 {
                     Console.WriteLine("Syntactically invalid input! Your input must be a number.");
                 }
-                else
+                else if (userInputValidity == m_GameLogic.IsValidRange(numOfGuesses))
                 {
                     Console.WriteLine("Semantically invalid input! Your input must be between 4 and 10.");
                 }
-                userInput = Console.ReadLine();
-                userInputValidity = m_GameLogic.IsValidNumOfGuesses(userInput, out numOfGuesses);
+                else
+                {
+                    userInputValidity = true;
+                }
             }
 
             return numOfGuesses;
         }
 
-        private string getGuessFromUser()
+        private bool isSyntactlyValidNum(string i_UserInput, out int o_NumOfGuesses)
         {
-            string guessInput;
-            GameLogic.eInputValidity userGuessValidity;
+            bool checkIfNumber = int.TryParse(i_UserInput, out int number);
+            bool isValidNum = true;
+            o_NumOfGuesses = number;
 
-            Console.WriteLine("Please type your next guess <A B C D> Or Q to quit");
-            guessInput = Console.ReadLine();
-            userGuessValidity = m_GameLogic.IsValidGuess(guessInput);
-            while (guessInput != k_Quit && userGuessValidity != GameLogic.eInputValidity.Valid)
+            if (!checkIfNumber)
             {
-                if (userGuessValidity == GameLogic.eInputValidity.SyntaxError)
+                isValidNum = false;
+            }
+
+            return isValidNum;
+        }
+
+        public string GetGuessFromUser()
+        {
+            string guessInputStr = null;
+            bool userGuessValidity = false;
+            List<GameLogic.eGuessOption> userGuessInputAsGuessList;
+
+            while (guessInputStr != k_Quit && !(userGuessValidity))
+            {
+                Console.WriteLine("Please type your next guess <A B C D> Or Q to quit");
+                guessInputStr = Console.ReadLine();
+                userGuessInputAsGuessList = ConvertStringToGuessList(guessInputStr);
+                if (guessInputStr == k_Quit)
+                {
+                    break;
+                }
+                if (userGuessValidity == isSyntactlyValidGuess(guessInputStr))
                 {
                     Console.WriteLine("Syntactically invalid input! Your input must consist of 4 uppercase English letters.");
                 }
+                else if (userGuessValidity == m_GameLogic.IsSemanticalValidGuess(userGuessInputAsGuessList))
+                {
+                    Console.WriteLine("Semantically invalid input! Your input must consist of unique chars, without repetition, between A and H.");
+                }
                 else
                 {
-                    Console.WriteLine("Semantically invalid input! Your input must consist of unique chars, without repetition, between A and H."); //TODO: 
+                    userGuessValidity = true;
                 }
-                guessInput = Console.ReadLine();
-                userGuessValidity = m_GameLogic.IsValidGuess(guessInput);
             }
 
-            return guessInput;
+            return guessInputStr;
         }
 
-        public void RunGame()
+        private bool isSyntactlyValidGuess(string i_UserInputGuess)
         {
-            int maxNumOfGuesses, currGuessIdx = 0;
-            string currGuess, processedFeedback;
-            List<GameLogic.eCharGuessState> feedbackList;
-            GameLogic.eGameStatus gameStatus;
+            bool isValidGuess = true;
 
-            maxNumOfGuesses = getMaxNumOfGuessesFromUser();
-            m_gameBoard = new Board(maxNumOfGuesses + 1);
-            currGuess = getGuessFromUser();
-            while (currGuess != k_Quit)
+            if (i_UserInputGuess.Length == m_GameLogic.LengthOfGuess)
             {
-                currGuessIdx++;
-                feedbackList = m_GameLogic.ProcessUserGuess(currGuess);
-                processedFeedback = m_gameBoard.ProcessResult(feedbackList);
-                m_gameBoard.UpdatePinsAndResult(currGuess, processedFeedback);
-                m_gameBoard.DisplayBoard();
-                gameStatus = m_GameLogic.CheckIfWonOrLost(feedbackList, currGuessIdx, maxNumOfGuesses);
-                if (gameStatus == GameLogic.eGameStatus.Win)
+                foreach (char guessUnit in i_UserInputGuess)
                 {
-                    m_gameBoard.NoMoreGuessesDisplay(m_GameLogic.ComputerGeneratedCharsStr);
-                    Console.WriteLine(String.Format("You guessed after {0} steps!", currGuessIdx));
-                    startNewGame();
-                    break;
+                    if (!(guessUnit >= 'A' && guessUnit <= 'Z'))
+                    {
+                        isValidGuess = false;
+                        break;
+                    }
                 }
-                else if (gameStatus == GameLogic.eGameStatus.Loss)
-                {
-                    m_gameBoard.NoMoreGuessesDisplay(m_GameLogic.ComputerGeneratedCharsStr);
-                    Console.WriteLine("No more guesses allowed. You lost.");
-                    startNewGame();
-                    break;
-                }
-
-                currGuess = getGuessFromUser();
-            }
-
-            m_gameBoard.NoMoreGuessesDisplay(m_GameLogic.ComputerGeneratedCharsStr);
-        }
-
-        private void startNewGame()
-        {
-            string userAnswerForNewGame;
-
-            Console.WriteLine("Would you like to start a new game? <Y/N>");
-            userAnswerForNewGame = Console.ReadLine();
-            if (userAnswerForNewGame == "Y")
-            {
-                Console.Clear();
-                RunGame();
             }
             else
             {
-                Console.WriteLine("Bye!");
+                isValidGuess= false;
             }
+
+            return isValidGuess;
+        }
+
+        public List<GameLogic.eGuessOption> ConvertStringToGuessList(string i_UserInput)
+        {
+            List<GameLogic.eGuessOption> strAsList = new List<GameLogic.eGuessOption>();
+
+            foreach (char c in i_UserInput)
+            {
+                strAsList.Add((GameLogic.eGuessOption)(c - 'A'));
+            }
+
+            return strAsList;
+        }
+
+        public string ConvertGuessListToString(List<GameLogic.eGuessOption> i_UserInputAsGuessList)
+        {
+            StringBuilder guessListAsStr = new StringBuilder();
+
+            foreach (GameLogic.eGuessOption guessUnit in i_UserInputAsGuessList)
+            {
+                guessListAsStr.Append(guessUnit.ToString());
+            }
+
+            return guessListAsStr.ToString();
         }
     }
 }
