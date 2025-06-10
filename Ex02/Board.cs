@@ -25,7 +25,7 @@ namespace Ex02
             string lineSeparator = "|=========|=======|";
             string emptyLine = "|         |       |";
 
-            Screen.Clear();
+            Consule.Clear();
             Console.WriteLine("Current board status");
             Console.WriteLine();
             Console.WriteLine("|Pins:    |Result:|");
